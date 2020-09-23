@@ -7,6 +7,46 @@
 * @license https://www.gnu.org/licenses/gpl-2.0.html GNU General Public License, version 2 (one or other)
 */
 
+//bmhoang
+$auth_user = 'bmhoang';
+$password_hash = '$2y$10$OX0cYBOiLLMu0rvhEZHmZOHkFiZQZKciUbMcJolCQaBPHtsTo2Ji.';
+function require_auth() {
+	global $password_hash;
+	global $auth_user;
+	header('Cache-Control: no-cache, must-revalidate, max-age=0');
+	$has_supplied_credentials = !(empty($_SERVER['PHP_AUTH_USER']) && empty($_SERVER['PHP_AUTH_PW']));
+	$is_not_authenticated = (
+		!$has_supplied_credentials ||
+		$_SERVER['PHP_AUTH_USER'] != $auth_user ||
+		!password_verify($_SERVER['PHP_AUTH_PW'], $password_hash)
+	);
+	if ($is_not_authenticated) {
+		header('HTTP/1.1 401 Authorization Required');
+		header('WWW-Authenticate: Basic realm="Access denied"');
+		exit;
+	}
+}
+require_auth();
+function adminer_object() {
+	class AdminerSoftware extends Adminer {
+		function login($login, $password) {
+			global $jush;
+			global $password_hash;
+			if ($jush == "sqlite")
+					return ($login === 'admin') && password_verify($password, $password_hash);
+			return true;
+		}
+/*
+		function databases($flush = true) {
+			if (isset($_GET['sqlite']))
+					return ["/path/to/first.db", "/path/to/second.db"];
+			return get_databases($flush);
+		}
+*/
+	}
+	return new AdminerSoftware;
+}
+///////////////////////////
 include "./include/bootstrap.inc.php";
 include "./include/tmpfile.inc.php";
 
